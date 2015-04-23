@@ -1,12 +1,13 @@
 # naive-bayes-classifier
-I will be running a workshop on how to create Naive Bayes document classifier in Excel. The purpose of the workshop is to understand how the model works and what it can be used for.
+Naive Bayes Classifier in excel.
 
-You will need to bring your laptop and make sure you have either Excel or OpenOffice installed. My intention is that you follow along and we build the model toghether. To speed up the set up, plese download Training and Test sets before the workshop.
-
-To understand how to train Bayes classifier I will briefly go over some probability concepts required for this model. I will keep the explanation simple, intuitive and easy to follow.
+Some useful resources:
+- [Bayes Rule, conditional probability, independence](https://controls.engin.umich.edu/wiki/index.php/Bayes_Rule,_conditional_probability,_independence "Bayes Rule, conditional probability, independence")
+- [Conditional Probability visualisation](http://setosa.io/conditional/ "Conditional Probability")
+- [Ch 1 from "Naive Bayes"](http://greenteapress.com/thinkbayes/ "Think Bayes")
 
 ## Training set
-app.csv contains 150 tweets related to a Mandrill App
+app.csv contains 150 tweets related to a Mandrill App <br/>
 other.csv contains 150 tweets about other mandrill-related things
 
 ## Test set
