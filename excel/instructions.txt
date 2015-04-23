@@ -1,0 +1,72 @@
+1) Open 'app.csv' and rename the tab to 'AboutMandrillAppApp'
+   Open 'other.csv' in a new tab and rename the tab to 'AboutOther'
+
+2) Removing Extraneous Punctuation
+   In both tweet tabs:
+    - B2: =LOWER(A2)
+    - C2: =SUBSTITUTE(B2, ". ", " ") # strip out any periods with space (to keep URLS intact)
+    - D2: =SUBSTITUTE(C2, ": ", " ")
+    - E2: =SUBSTITUTE(D2, "?", " ") # note, no space after ? because it does not appear in URLs that often
+    - F2: =SUBSTITUTE(E2, "!", " ")
+    - G2: =SUBSTITUTE(F2, ";", " ")
+    - H2: =SUBSTITUTE(G2, ",", " ")
+
+3) Splitting on Spaces
+# You need to count how many times each word is used across all tweets in a category (App/Other).
+# That means your need all the tweets' words in a single column.
+    - Create two new tabs: 'AppTokens' and 'OtherTokens'
+    - In these two tabs label A1 as 'Tweet'
+    - Highlight A2:A4501 and Paste Special the tweet values from column H of the initial two tabs
+    - Label B1 as 'Space Position'
+    - Place 0 in B2:B151 # to indicate that words begin at the first character of each tweet
+    - B152: =FIND(" ", A152, B2+1) # find the next space
+    - B152: =IFERROR(FIND(" ", A152, B2+1), LEN(A152)+1) # if fewer than 30 words, then return position after the last word
+    - Double click the formula in B152 to send it down the sheet through A4501
+    - Label C1 as 'Token'
+    - C2: =MID(A2, B2+1, B152-B2-1)
+    - C2: =IFERROR(MID(A2, B2+1, B152-B2-1), ".") # . will be ignored later
+    - Double click the formula in C2 to tokenize every tweet
+    - Label D1 as 'Length'
+    - D2: =LEN(C2)
+    - Double click the formula in D2
+
+4) Counting Tokens and Calculating Probabilities
+    - Select C1:D4501 from 'AppTokens' tab and then insert data into a PivotTable
+    - Rename created pivot table tab 'AppTokensProbability'
+    - In the PivotTable Builder:
+      - Row Labels: token
+      - Values: Count of token
+      - Report Filter: length; uncheck tokens of length 0, 1, 2
+    - Label column C as 'Add One To Everything' (C4 on Mac)
+    - C5 = B5+1
+    - Double click the formula in C5
+    - At the bottom of column C add new total for the column, C828: =SUM(C5:C827)
+    - Label column D as 'P(Token|App)'
+    - D5: =C5/C$828 # where C828 is the grand total for column C. Note the absolute reference
+    - Double click the formula in D5
+    - Label column E as 'LN(P)'
+    - E5: =LN(D5)
+    - Double click the formula in E5
+    - Remove D828 and E828 (resulted from sending the formula all the way down in these columns)
+    - Create an identical tab using the non-app tokens called 'OtherTokensProbabilities'
+
+
+5) Test the model
+    - Create a new tab 'TestTweets' and load test_set.csv and apply the same punctuation removal as in step 2
+    - Create another tab 'TestPredictions' with columns Number, Class, Prediction, Tokens
+    - Paste processed tweets into Tokens column
+    - Select tweets and apply 'Text to Columns'
+      - Select Delimited and press Next
+      - Delimiters: Tab, Space
+      - Treat consecutive delimiters as one (merge delimiter - LibreOffice): check
+      - Text Qualifier (Text delimiter - LibreOffice): none
+    - D25: =(D2, AppTokensProbability!$A$4:$E$826, 5, FALSE)
+    - D25: =IF(ISNA(VLOOKUP(D2, AppTokensProbability!$A$4:$E$826, 5, FALSE)), LN(1/AppTokensProbability!$C$827), VLOOKUP(D2, AppTokensProbability!$A$4:$E$826, 5, FALSE))
+    - D25: =IF(LEN(D2) <= 3, 0, IF(ISNA(VLOOKUP(D2, AppTokensProbability!$A$4:$E$826, 5, FALSE)), LN(1/AppTokensProbability!$C$827), VLOOKUP(D2, AppTokensProbability!$A$4:$E$826, 5, FALSE)))
+    - Drag the formula through to column AI and 20 rows down
+    - D48: Similar formula as in D25, but referencing OtherTokensProbabilities
+    - Drag the formula through to column AI and 20 rows down
+    - Add a label in C24: Sum of conditional probabilities
+    - C25: =SUM(D25:AI25); double click to send it down
+    - Calculate the sum of conditional probabilities given tweet is Other, i.e. C48: ==UM(D48:AI48); double click to send it down
+    - C2: =IF(C25 > C48, "APP", "OTHER")
